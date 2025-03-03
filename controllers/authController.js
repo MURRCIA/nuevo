@@ -1,6 +1,6 @@
 import bycript from 'bcryptjs';
 import PrismaClient from '@prisma/client';
-import SignJWT from 'jose'; // libreria para crear tokens
+import {SignJWT} from 'jose'; // libreria para crear tokens
 import {loginShema, registerShema} from '../validation/authShema.js';
 
 const prisma = new PrismaClient();

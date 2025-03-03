@@ -1,5 +1,5 @@
 import PrismaClient from '@prisma/client';
-import JWTVerify from 'jose';
+import {JWTVerify} from 'jose';
 
 
 const prisma = new PrismaClient();
