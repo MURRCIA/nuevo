@@ -115,6 +115,8 @@ const login = async(res, req)=>{
         user: req.user
     });
  }
+ 
+ export {login, register, logout, me};
 
 
 
