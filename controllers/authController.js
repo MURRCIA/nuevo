@@ -1,126 +1,131 @@
 import bcrypt from 'bcryptjs';
-import {PrismaClient} from '@prisma/client';
-import {SignJWT} from 'jose'; // libreria para crear tokens
-import {loginShema, registerShema} from '../validation/authShema.js';
+import { PrismaClient } from '@prisma/client';
+import { SignJWT } from 'jose';
+import { registerSchema, loginSchema } from '../validation/authSchema.js';
 
 const prisma = new PrismaClient();
-const createToken = async(userId)=>{
-    const token = await new SignJWT({userId})
-    .setProtectedHeader({alg: 'HS256'})
+
+// Helper to create JWT
+const createToken = async (userId) => {
+  const token = await new SignJWT({ userId })
+    .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1d')
     .sign(new TextEncoder().encode(process.env.JWT_SECRET));
+  
+  return token;
+};
+
+// Helper to generate cookie options consistently
+const getCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    domain: isProd ? '.ucommerce.live' : undefined,
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    path: '/'  // ensure path is consistent for setting and clearing the cookie
+  };
+};
+
+// Register a new user
+export const register = async (req, res) => {
+  try {
+    const validation = registerSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ 
+        message: 'Validation error', 
+        errors: validation.error.errors 
+      });
+    }
+
+    const { email, password, name } = validation.data;
     
-    return token;
-}
-
-const getCookieOptions = ()=>{
-    const isProd = process.env.NODE_ENV === 'production';
-    return {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? 'none' : 'lax',
-        domain: isProd ? 'yourdomain.com' : 'localhost',
-        path: '/',
-        maxAge: 1 * 24 * 60 * 60 * 1000,
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
     }
-}
 
-// funcion para iniciar sesion
-const login = async(req, res)=>{
-    try {
-        const validacion = loginShema.safeParse(req.body);
-        if(!validacion.success){
-            return res.status(400).json({error: validacion.error.flatten().fieldErrors});
-        }
-        const {email, password} = validacion.data;
-        const user = await prisma.user.findUnique({
-            where: {email}
-        });
-        if(!user){
-            return res.status(400).json({error: 'Usuario no encontrado'});
-        }
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        if(!passwordMatch){
-            return res.status(400).json({error: 'Contraseña incorrecta'});
-        }
-        const token = await createToken(user.id);
-        res.cookie('token', token, getCookieOptions());
-        res.json({
-            message: 'Inicio de sesión exitoso',
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email
-            }
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({error: 'Error al iniciar sesión'});
-    }
-}
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
- // funcion para registrar un usuario
- const register = async(req, res)=>{
-    try {
-        const validacion = registerShema.safeParse(req.body);
-        if(!validacion.success){
-            return res.status(400).json({error: validacion.error.flatten().fieldErrors});
-        } 
-        const {name, email, password} = validacion.data;
-        const existingUSer = await prisma.user.findUnique({
-            where: {email}
-        });
-        if(existingUSer){
-            return res.status(400).json({error: 'El usuario ya existe'});
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const createdUser = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword
-            }, select: {
-                id: true,
-                name: true,
-                email: true,
-                createdAt: true,
-            }
-        });
-        const token = await createToken(createdUser.id);
-        res.cookie('token', token, getCookieOptions());
-        res.status(201).json({
-            message: 'Usuario registrado exitosamente',
-            user: createdUser
-        });
-
-
-
-    } catch (error) {
-        console.error('Register error:', error);
-        res.status(500).json({error: 'Error al registrar usuario'});
-    }
- }
-
- const logout = async(req, res)=>{
-   const options = getCookieOptions();
-   res.clearCookie('token', options);
-   res.json(
-    {message: 'Cierre de sesión exitoso'}
-);
- }
-
- const me = async(req, res)=>{
-    if(!req.user){
-        return res.status(401).json({error: 'No token provided'});
-    }
-    res.json({
-        message: 'Usuario autenticado',
-        user: req.user
+    const user = await prisma.user.create({
+      data: { email, password: hashedPassword, name },
+      select: { id: true, email: true, name: true, createdAt: true }
     });
- }
- 
- export {login, register, logout, me};
 
+    const token = await createToken(user.id);
 
+    // Set cookie with consistent options
+    res.cookie('token', token, getCookieOptions());
 
+    res.status(201).json({
+      message: 'User registered successfully',
+      user
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Login user
+export const login = async (req, res) => {
+  try {
+    const validation = loginSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ 
+        message: 'Validation error', 
+        errors: validation.error.errors 
+      });
+    }
+
+    const { email, password } = validation.data;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = await createToken(user.id);
+
+    // Set cookie with consistent options
+    res.cookie('token', token, getCookieOptions());
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Logout user
+export const logout = (req, res) => {
+  const options = getCookieOptions();
+  // Remove maxAge for clearCookie as it isn't needed
+  delete options.maxAge;
+  
+  res.clearCookie('token', options);
+  res.json({ message: 'Logged out successfully' });
+};
+
+// Get current user
+export const me = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+  res.json({ user: req.user });
+};
