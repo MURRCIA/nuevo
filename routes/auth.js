@@ -13,7 +13,7 @@ router.post('/logout', logout);
 router.get('/me', middleware, me);
 
 
-
+export default router;
 
 
 //www.casa.com/api/auth/register // ruta para registrar un usuario
