@@ -18,7 +18,7 @@ app.get("/api/protected", middleware, (req, res) => {
 
 app.use((req, res, next) => {
     res.status(500).json({
-        message: 'Internal server error'
+        message: 'Hola mundo'
     });
 });
 const port = process.env.PORT || 5000;
