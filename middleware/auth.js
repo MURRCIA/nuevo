@@ -4,7 +4,7 @@ import {jwtVerify} from 'jose';
 
 const prisma = new PrismaClient();
 
-const authMiddleWare = async(req, record, next)=>{
+const authMiddleWare = async(req, res, next)=>{
 
     try {
         const cookieValidation = req.cookies.token;
@@ -29,6 +29,7 @@ const authMiddleWare = async(req, record, next)=>{
         next();
             
     } catch (error) {
+        console.error('Auth middleware error:', error);
         return res.status(401).json({error: 'Invalid token'});
     }
 

@@ -10,6 +10,8 @@ const createToken = async(userId)=>{
     .setIssuedAt()
     .setExpirationTime('1d')
     .sign(new TextEncoder().encode(process.env.JWT_SECRET));
+    
+    return token;
 }
 
 const getCookieOptions = ()=>{
@@ -25,7 +27,7 @@ const getCookieOptions = ()=>{
 }
 
 // funcion para iniciar sesion
-const login = async(res, req)=>{
+const login = async(req, res)=>{
     try {
         const validacion = loginShema.safeParse(req.body);
         if(!validacion.success){
@@ -53,12 +55,13 @@ const login = async(res, req)=>{
             }
         });
     } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({error: 'Error al iniciar sesión'});
     }
 }
 
  // funcion para registrar un usuario
- const register = async(res, req)=>{
+ const register = async(req, res)=>{
     try {
         const validacion = registerShema.safeParse(req.body);
         if(!validacion.success){
@@ -94,11 +97,12 @@ const login = async(res, req)=>{
 
 
     } catch (error) {
+        console.error('Register error:', error);
         res.status(500).json({error: 'Error al registrar usuario'});
     }
  }
 
- const logout = async(res, req)=>{
+ const logout = async(req, res)=>{
    const options = getCookieOptions();
    res.clearCookie('token', options);
    res.json(
@@ -106,7 +110,7 @@ const login = async(res, req)=>{
 );
  }
 
- const me = async(res, req)=>{
+ const me = async(req, res)=>{
     if(!req.user){
         return res.status(401).json({error: 'No token provided'});
     }
