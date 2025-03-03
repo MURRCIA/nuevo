@@ -1,5 +1,5 @@
 import PrismaClient from '@prisma/client';
-import {JWTVerify} from 'jose';
+import {jwtVerify} from 'jose';
 
 
 const prisma = new PrismaClient();
@@ -12,7 +12,7 @@ const authMiddleWare = async(req, record, next)=>{
                 return res.status(401).json({error: 'No token provided'});
             }
             
-        const {payload} = await JWTVerify(
+        const {payload} = await jwtVerify(
             cookieValidation,
             new TextEncoder().encode(process.env.JWT_SECRET)
         )
