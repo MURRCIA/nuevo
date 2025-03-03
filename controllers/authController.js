@@ -1,9 +1,9 @@
 import bycript from 'bcryptjs';
-import prisma from '@prisma/client';
+import PrismaClient from '@prisma/client';
 import SignJWT from 'jose'; // libreria para crear tokens
 import {loginShema, registerShema} from '../validation/authShema.js';
 
-const prisma = new prisma();
+const prisma = new PrismaClient();
 const createToken = async(userId)=>{
     const token = await new SignJWT({userId})
     .setProtectedHeader({alg: 'HS256'})

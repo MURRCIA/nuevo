@@ -1,7 +1,7 @@
-import prisma from '@prisma/client';
+import PrismaClient from '@prisma/client';
 import bycript from 'bcrypt';
 
-const prisma = new prisma();
+const prisma = new PrismaClient();
 
 const main = async()=>{
     try {
