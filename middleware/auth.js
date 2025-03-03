@@ -1,8 +1,8 @@
-import prisma from '@prisma/client';
+import PrismaClient from '@prisma/client';
 import JWTVerify from 'jose';
 
 
-const prisma = new prisma();
+const prisma = new PrismaClient();
 
 const authMiddleWare = async(req, record, next)=>{
 
