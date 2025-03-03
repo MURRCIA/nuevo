@@ -1,4 +1,4 @@
-import bycript from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import {PrismaClient} from '@prisma/client';
 import {SignJWT} from 'jose'; // libreria para crear tokens
 import {loginShema, registerShema} from '../validation/authShema.js';
@@ -40,7 +40,7 @@ const login = async(req, res)=>{
         if(!user){
             return res.status(400).json({error: 'Usuario no encontrado'});
         }
-        const passwordMatch = await bycript.compare(password, user.password);
+        const passwordMatch = await bcrypt.compare(password, user.password);
         if(!passwordMatch){
             return res.status(400).json({error: 'Contraseña incorrecta'});
         }
@@ -74,7 +74,7 @@ const login = async(req, res)=>{
         if(existingUSer){
             return res.status(400).json({error: 'El usuario ya existe'});
         }
-        const hashedPassword = await bycript.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         const createdUser = await prisma.user.create({
             data: {
                 name,
