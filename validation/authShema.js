@@ -1,20 +1,14 @@
-import zod from 'zod';
+import { z } from 'zod';
 
-
-const loginShema = zod.object({
-    email: zod.string().email(),
-    password: zod.string().min(8),
+const registerSchema = z.object({
+  email: z.string().email('Please provide a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  name: z.string().optional()
 });
 
-const registerShema = zod.object({
-    name: zod.string().min(1),
-    email: zod.string().email(),
-    password: zod.string().min(8),
+const loginSchema = z.object({
+  email: z.string().email('Please provide a valid email'),
+  password: z.string().min(1, 'Password is required')
 });
 
-export {loginShema, registerShema};
-
-
-
-
-
+export { registerSchema, loginSchema };

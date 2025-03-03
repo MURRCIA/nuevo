@@ -3,10 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import middleware from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
-import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
 
 const app = express();
 app.use(cors({
@@ -30,20 +27,20 @@ app.get("/api/protected", middleware, (req, res) => {
 // Health check endpoint
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
+app.get("/api/protected", authMiddleware, (req, res) => {
+    res.json({
+      message: "This is a protected route",
+      user: req.user,
+    });
+  });
+  
+  app.use((err, req, res, next) => {
     res.status(500).json({
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'production' ? null : err.message
+      message: "Something went wrong",
+      error: err.message,
     });
-});
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        message: 'Route not found'
-    });
-});
+  });
+  
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
