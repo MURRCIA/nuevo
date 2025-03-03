@@ -56,6 +56,7 @@ const login = async(res, req)=>{
         res.status(500).json({error: 'Error al iniciar sesión'});
     }
 }
+
  // funcion para registrar un usuario
  const register = async(res, req)=>{
     try {
@@ -97,7 +98,23 @@ const login = async(res, req)=>{
     }
  }
 
+ const logout = async(res, req)=>{
+   const options = getCookieOptions();
+   res.clearCookie('token', options);
+   res.json(
+    {message: 'Cierre de sesión exitoso'}
+);
+ }
 
+ const me = async(res, req)=>{
+    if(!req.user){
+        return res.status(401).json({error: 'No token provided'});
+    }
+    res.json({
+        message: 'Usuario autenticado',
+        user: req.user
+    });
+ }
 
 
 

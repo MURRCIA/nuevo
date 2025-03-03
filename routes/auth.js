@@ -1,6 +1,6 @@
 import express from 'express';
 import middleware from '../middleware/auth.js';
-import login from '../controllers/authController.js';
+import {login, register, logout, me} from '../controllers/authController.js';
 
 
 // rutas publicas 
