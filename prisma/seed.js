@@ -6,13 +6,13 @@ const prisma = new PrismaClient();
 const main = async()=>{
     try {
         const adminData = {
-            name: 'Admin',
             email: 'admin@gmail.com',
             password: 'admin123',
-            role: 'ADMIN'
+            name: 'Admin',
+             role: 'ADMIN'
         }
         
-        const existingAdmin = await prisma.user.findUnique({
+        const existingAdmin = await prisma.user.findFirst({
             where: {role: 'ADMIN'}
         });
         if(!existingAdmin){
@@ -21,9 +21,9 @@ const main = async()=>{
             // Create the admin user
             const admin = await prisma.user.create({
                 data: {
-                    name: adminData.name,
                     email: adminData.email,
                     password: hashedPassword, 
+                    name: adminData.name,
                     role: adminData.role
                 }
                 
